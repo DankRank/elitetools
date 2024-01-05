@@ -133,7 +133,9 @@ void main() {
 		const w = 256;
 		const zNear = 0.5;
 		const zFar = w*2;
-		const projection = m4.ortho(aspect*-w, aspect*w, -w, w, zNear, zFar);
+		const projection = aspect >= 1 ?
+				m4.ortho(aspect*-w, aspect*w, -w, w, zNear, zFar) :
+				m4.ortho(-w, w, -w/aspect, w/aspect, zNear, zFar);
 		const eye = [0, 0, w];
 		const target = [0, 0, 0];
 		const up = [0, 1, 0];
