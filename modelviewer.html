@@ -10,8 +10,20 @@ canvas {
   height: 100vh;
   display: block;
 }
+#b {
+  position: absolute;
+  top: 10px;
+  width: 100%;
+  text-align: center;
+  z-index: 2;
+  color: white;
+  font-family: monospace;
+  font-size: 400%;
+  mix-blend-mode: exclusion;
+}
 </style>
 <canvas id="c"></canvas>
+<div id="b"></div>
 <script src="twgl-full.min.js"></script>
 <script type="x-shader/x-vertex" id="vs">
 uniform mat4 u_worldViewProjection;
@@ -93,7 +105,11 @@ void main() {
 
 	const buffers = shipdata.map(loadship);
 	let iship = 11;
-	document.title = shipdata[iship].shipname;
+	function setship() {
+		document.title = shipdata[iship].shipname;
+		document.getElementById('b').innerText = shipdata[iship].shipname;
+	}
+	setship();
 
 	const programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
 
@@ -143,10 +159,10 @@ void main() {
 	document.body.addEventListener("keydown", (event) => {
 		if (event.code == 'KeyJ') {
 			iship = iship == shipdata.length-1 ? 0 : iship+1;
-			document.title = shipdata[iship].shipname;
+			setship();
 		} else if (event.code == 'KeyK') {
 			iship = iship == 0 ? shipdata.length-1 : iship-1;
-			document.title = shipdata[iship].shipname;
+			setship();
 		}
 	});
 </script>
