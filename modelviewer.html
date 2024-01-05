@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>elite viewer</title>
+<style>
+body {
+  margin: 0;
+}
+canvas {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+</style>
+<canvas id="c"></canvas>
+<script src="twgl-full.min.js"></script>
+<script type="x-shader/x-vertex" id="vs">
+uniform mat4 u_worldViewProjection;
+uniform mat4 u_world;
+attribute vec4 i_position;
+attribute vec3 i_normal1;
+attribute vec3 i_normal2;
+varying vec3 v_normal1;
+varying vec3 v_normal2;
+
+void main() {
+	gl_Position = u_worldViewProjection * i_position;
+	v_normal1 = (u_world * vec4(i_normal1, 0)).xyz;
+	v_normal2 = (u_world * vec4(i_normal2, 0)).xyz;
+}
+</script>
+<script type="x-shader/x-fragment" id="fs">
+precision mediump float;
+
+varying vec3 v_normal1;
+varying vec3 v_normal2;
+
+void main() {
+	if (v_normal1.z < 0.0 && v_normal2.z < 0.0)
+		//gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+		discard;
+	else
+		gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
+}
+</script>
+<script>
+	vertexes = [
+		[  32,    0,   76,    15,     15,   15,    15,         31],
+		[ -32,    0,   76,    15,     15,   15,    15,         31],
+		[   0,   26,   24,    15,     15,   15,    15,         31],
+		[-120,   -3,   -8,     3,      7,   10,    10,         31],
+		[ 120,   -3,   -8,     4,      8,   12,    12,         31],
+		[ -88,   16,  -40,    15,     15,   15,    15,         31],
+		[  88,   16,  -40,    15,     15,   15,    15,         31],
+		[ 128,   -8,  -40,     8,      9,   12,    12,         31],
+		[-128,   -8,  -40,     7,      9,   10,    10,         31],
+		[   0,   26,  -40,     5,      6,    9,     9,         31],
+		[ -32,  -24,  -40,     9,     10,   11,    11,         31],
+		[  32,  -24,  -40,     9,     11,   12,    12,         31],
+		[ -36,    8,  -40,     9,      9,    9,     9,         20],
+		[  -8,   12,  -40,     9,      9,    9,     9,         20],
+		[   8,   12,  -40,     9,      9,    9,     9,         20],
+		[  36,    8,  -40,     9,      9,    9,     9,         20],
+		[  36,  -12,  -40,     9,      9,    9,     9,         20],
+		[   8,  -16,  -40,     9,      9,    9,     9,         20],
+		[  -8,  -16,  -40,     9,      9,    9,     9,         20],
+		[ -36,  -12,  -40,     9,      9,    9,     9,         20],
+		[   0,    0,   76,     0,     11,   11,    11,          6],
+		[   0,    0,   90,     0,     11,   11,    11,         31],
+		[ -80,   -6,  -40,     9,      9,    9,     9,          8],
+		[ -80,    6,  -40,     9,      9,    9,     9,          8],
+		[ -88,    0,  -40,     9,      9,    9,     9,          6],
+		[  80,    6,  -40,     9,      9,    9,     9,          8],
+		[  88,    0,  -40,     9,      9,    9,     9,          6],
+		[  80,   -6,  -40,     9,      9,    9,     9,          8],
+	];
+	edges = [
+		[ 0,       1,     0,    11,         31],
+		[ 0,       4,     4,    12,         31],
+		[ 1,       3,     3,    10,         31],
+		[ 3,       8,     7,    10,         31],
+		[ 4,       7,     8,    12,         31],
+		[ 6,       7,     8,     9,         31],
+		[ 6,       9,     6,     9,         31],
+		[ 5,       9,     5,     9,         31],
+		[ 5,       8,     7,     9,         31],
+		[ 2,       5,     1,     5,         31],
+		[ 2,       6,     2,     6,         31],
+		[ 3,       5,     3,     7,         31],
+		[ 4,       6,     4,     8,         31],
+		[ 1,       2,     0,     1,         31],
+		[ 0,       2,     0,     2,         31],
+		[ 8,      10,     9,    10,         31],
+		[10,      11,     9,    11,         31],
+		[ 7,      11,     9,    12,         31],
+		[ 1,      10,    10,    11,         31],
+		[ 0,      11,    11,    12,         31],
+		[ 1,       5,     1,     3,         29],
+		[ 0,       6,     2,     4,         29],
+		[20,      21,     0,    11,          6],
+		[12,      13,     9,     9,         20],
+		[18,      19,     9,     9,         20],
+		[14,      15,     9,     9,         20],
+		[16,      17,     9,     9,         20],
+		[15,      16,     9,     9,         19],
+		[14,      17,     9,     9,         17],
+		[13,      18,     9,     9,         19],
+		[12,      19,     9,     9,         19],
+		[ 2,       9,     5,     6,         30],
+		[22,      24,     9,     9,          6],
+		[23,      24,     9,     9,          6],
+		[22,      23,     9,     9,          8],
+		[25,      26,     9,     9,          6],
+		[26,      27,     9,     9,          6],
+		[25,      27,     9,     9,          8],
+	];
+	faces = [
+		[  0,       62,       31,         31],
+		[-18,       55,       16,         31],
+		[ 18,       55,       16,         31],
+		[-16,       52,       14,         31],
+		[ 16,       52,       14,         31],
+		[-14,       47,        0,         31],
+		[ 14,       47,        0,         31],
+		[-61,      102,        0,         31],
+		[ 61,      102,        0,         31],
+		[  0,        0,      -80,         31],
+		[ -7,      -42,        9,         31],
+		[  0,      -30,        6,         31],
+		[  7,      -42,        9,         31],
+	];
+
+	const v3 = twgl.v3;
+	const m4 = twgl.m4;
+	const gl = document.getElementById("c").getContext("webgl");
+	const programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
+	const position = [];
+	const normal1 = [];
+	const normal2 = [];
+	function betternormal(i) {
+		//return faces[i]; // uncomment to see original normals
+		let e1 = undefined;
+		let e2 = undefined;
+		for (const edge of edges) {
+			if (edge[2] == i || edge[3] == i) {
+				if (e1 === undefined) {
+					e1 = edge;
+				} else {
+					e2 = edge;
+					n = v3.cross(v3.subtract(vertexes[e1[0]], vertexes[e1[1]]), v3.subtract(vertexes[e2[0]], vertexes[e2[1]]));
+					if (v3.length(n) != 0)
+						break;
+				}
+			}
+		}
+		if (v3.dot(n, faces[i]) < 0)
+			n = v3.negate(n);
+		return v3.normalize(n);
+	}
+	for (const edge of edges) {
+		const v1 = vertexes[edge[0]];
+		const v2 = vertexes[edge[1]];
+		const n1 = betternormal(edge[2]);
+		const n2 = betternormal(edge[3]);
+		position.push(v1[0], v1[1], -v1[2]);
+		normal1.push(n1[0], n1[1], -n1[2]);
+		normal2.push(n2[0], n2[1], -n2[2]);
+		position.push(v2[0], v2[1], -v2[2]);
+		normal1.push(n1[0], n1[1], -n1[2]);
+		normal2.push(n2[0], n2[1], -n2[2]);
+	}
+	const arrays = {
+		i_position: position,
+		i_normal1: normal1,
+		i_normal2: normal2
+	};
+	const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
+
+	function matmul(...mats) {
+		let i = mats.length;
+		let m = m4.copy(mats[--i]);
+		while (i > 0) {
+			m4.multiply(mats[--i], m, m);
+		}
+		return m
+	}
+	function render(time) {
+		time *= 0.002;
+		twgl.resizeCanvasToDisplaySize(gl.canvas);
+		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+		gl.clearColor(0, 0, 0, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+		const fov = 30 * Math.PI / 180;
+		const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+		const w = 150;
+		const zNear = 0.5;
+		const zFar = w*2;
+		const projection = m4.ortho(aspect*-w, aspect*w, -w, w, zNear, zFar);
+		const eye = [0, 0, w];
+		const target = [0, 0, 0];
+		const up = [0, 1, 0];
+
+		const camera = m4.lookAt(eye, target, up);
+		const view = m4.inverse(camera);
+		const world = matmul(m4.rotationZ(time*.3), m4.rotationY(time*.7), m4.rotationX(time));
+
+		const uniforms = {
+			u_worldViewProjection: matmul(projection, view, world),
+			u_world: world,
+		};
+
+		gl.useProgram(programInfo.program);
+		twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+		twgl.setUniforms(programInfo, uniforms);
+		twgl.drawBufferInfo(gl, bufferInfo, gl.LINES);
+
+		requestAnimationFrame(render);
+	}
+	requestAnimationFrame(render);
+</script>
