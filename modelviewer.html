@@ -105,9 +105,10 @@ void main() {
 
 	const buffers = shipdata.map(loadship);
 	let iship = 11;
+	let allmode = false;
 	function setship() {
-		document.title = shipdata[iship].shipname;
-		document.getElementById('b').innerText = shipdata[iship].shipname;
+		document.title = allmode ? 'ALL' : shipdata[iship].shipname;
+		document.getElementById('b').innerText = allmode ? '' : shipdata[iship].shipname;
 	}
 	setship();
 
@@ -129,7 +130,7 @@ void main() {
 		gl.clearColor(0, 0, 0, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+		const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight / (allmode ? 2 : 1);
 		const w = 256;
 		const zNear = 0.5;
 		const zFar = w*2;
@@ -150,9 +151,21 @@ void main() {
 		};
 
 		gl.useProgram(programInfo.program);
-		twgl.setBuffersAndAttributes(gl, programInfo, buffers[iship]);
 		twgl.setUniforms(programInfo, uniforms);
-		twgl.drawBufferInfo(gl, buffers[iship], gl.LINES);
+		if (allmode) {
+			const stepx = gl.canvas.width / 8;
+			const stepy = gl.canvas.height / 4;
+			for (let i = 0; i < shipdata.length; i++) {
+				const x = i%8;
+				const y = (i/8)^3;
+				gl.viewport(x*stepx, y*stepy, stepx, stepy);
+				twgl.setBuffersAndAttributes(gl, programInfo, buffers[i]);
+				twgl.drawBufferInfo(gl, buffers[i], gl.LINES);
+			}
+		} else {
+			twgl.setBuffersAndAttributes(gl, programInfo, buffers[iship]);
+			twgl.drawBufferInfo(gl, buffers[iship], gl.LINES);
+		}
 
 		requestAnimationFrame(render);
 	}
@@ -164,6 +177,9 @@ void main() {
 			setship();
 		} else if (event.code == 'KeyK') {
 			iship = iship == 0 ? shipdata.length-1 : iship-1;
+			setship();
+		} else if (event.code == 'KeyA') {
+			allmode = !allmode;
 			setship();
 		}
 	});
