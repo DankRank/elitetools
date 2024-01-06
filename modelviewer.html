@@ -10,20 +10,8 @@ canvas {
   height: 100vh;
   display: block;
 }
-#b {
-  position: absolute;
-  top: 10px;
-  width: 100%;
-  text-align: center;
-  z-index: 2;
-  color: white;
-  font-family: monospace;
-  font-size: 400%;
-  mix-blend-mode: exclusion;
-}
 </style>
 <canvas id="c"></canvas>
-<div id="b"></div>
 <script src="twgl-full.min.js"></script>
 <script type="x-shader/x-vertex" id="vs">
 uniform mat4 u_worldViewProjection;
@@ -33,7 +21,6 @@ attribute vec3 i_normal1;
 attribute vec3 i_normal2;
 varying vec3 v_normal1;
 varying vec3 v_normal2;
-
 void main() {
 	gl_Position = u_worldViewProjection * i_position;
 	v_normal1 = (u_world * vec4(i_normal1, 0)).xyz;
@@ -42,10 +29,8 @@ void main() {
 </script>
 <script type="x-shader/x-fragment" id="fs">
 precision mediump float;
-
 varying vec3 v_normal1;
 varying vec3 v_normal2;
-
 void main() {
 	if (v_normal1.z < 0.0 && v_normal2.z < 0.0)
 		//gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
@@ -54,12 +39,64 @@ void main() {
 		gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
 }
 </script>
+<script type="x-shader/x-vertex" id="vstext">
+uniform mat4 u_mvp;
+attribute vec4 i_position;
+attribute vec2 i_texcoord;
+varying vec2 v_texcoord;
+void main() {
+	gl_Position = u_mvp * i_position;
+	v_texcoord = i_texcoord;
+}
+</script>
+<script type="x-shader/x-fragment" id="fstext">
+precision mediump float;
+uniform sampler2D u_tex;
+varying vec2 v_texcoord;
+void main() {
+	gl_FragColor = texture2D(u_tex, v_texcoord);
+}
+</script>
 <script src="shipdata.js"></script>
+<script src="beebfont.js"></script>
 <script>
 	"use strict";
 	const v3 = twgl.v3;
 	const m4 = twgl.m4;
 	const gl = document.getElementById("c").getContext("webgl");
+
+	const fonttexdata = new Uint8Array(128*128);
+	for (let i = 0x20; i < 0x80; i++) {
+		let s = (i-0x20)*8;
+		let d = (i&0xF0)<<6 | (i&0x0F)<<3;
+		for (let j = 0; j < 8; j++) {
+			for (let k = 0; k < 8; k++) {
+				fonttexdata[d] = beebfont[s]&1<<(7-k) ? 0xFF : 0x00;
+				d += 1;
+			}
+			s += 1;
+			d += 128-8;
+		}
+	}
+	const fonttex = twgl.createTexture(gl, { minMag: gl.NEAREST, format: gl.LUMINANCE, src: fonttexdata });
+	function loadshiplabel(data) {
+		let s = data.shipname;
+		const arrays = { i_position: [], i_texcoord: [] };
+		const y1 = 1;
+		const y2 = 0;
+		let x1 = -s.length/2;
+		for (let i = 0; i < s.length; i++) {
+			const x2 = x1 + 1;
+			const s1 = (s.charCodeAt(i)&0x0F)/16;
+			const t1 = (s.charCodeAt(i)>>4)/16;
+			const s2 = s1 + 1/16;
+			const t2 = t1 + 1/16;
+			arrays.i_position.push(x1, y1, -1, x1, y2, -1, x2, y2, -1, x1, y1, -1, x2, y2, -1, x2, y1, -1);
+			arrays.i_texcoord.push(s1, t1,     s1, t2,     s2, t2,     s1, t1,     s2, t2,     s2, t1    );
+			x1 = x2;
+		}
+		return twgl.createBufferInfoFromArrays(gl, arrays);
+	}
 
 	function loadship(data) {
 		const vertexes = data.vertexes;
@@ -104,15 +141,17 @@ void main() {
 	}
 
 	const buffers = shipdata.map(loadship);
+	const labelbuffers = shipdata.map(loadshiplabel);
 	let iship = 11;
 	let allmode = false;
+	let textenabled = true;
 	function setship() {
 		document.title = allmode ? 'ALL' : shipdata[iship].shipname;
-		document.getElementById('b').innerText = allmode ? '' : shipdata[iship].shipname;
 	}
 	setship();
 
 	const programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
+	const textprogramInfo = twgl.createProgramInfo(gl, ["vstext", "fstext"]);
 
 	function matmul(...mats) {
 		let i = mats.length;
@@ -166,6 +205,37 @@ void main() {
 			twgl.setBuffersAndAttributes(gl, programInfo, buffers[iship]);
 			twgl.drawBufferInfo(gl, buffers[iship], gl.LINES);
 		}
+	
+		if (textenabled) {
+			gl.useProgram(textprogramInfo.program);
+			gl.enable(gl.BLEND);
+			gl.blendFuncSeparate(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_COLOR, gl.ONE, gl.ZERO);
+			const tw = 6;
+			const textprojection = aspect >= 1 ?
+					m4.ortho(aspect*-tw, aspect*tw, 0, 2*tw, zNear, zFar) :
+					m4.ortho(-tw, tw, -tw/aspect + tw, tw/aspect + tw, zNear, zFar);
+			const textuniforms = {
+				u_mvp: matmul(textprojection),
+				u_tex: fonttex
+			};
+			twgl.setUniforms(textprogramInfo, textuniforms);
+			if (allmode) {
+				const stepx = gl.canvas.width / 8;
+				const stepy = gl.canvas.height / 4;
+				for (let i = 0; i < shipdata.length; i++) {
+					const x = i%8;
+					const y = (i/8)^3;
+					gl.viewport(x*stepx, y*stepy, stepx, stepy);
+					twgl.setBuffersAndAttributes(gl, textprogramInfo, labelbuffers[i]);
+					twgl.drawBufferInfo(gl, labelbuffers[i], gl.TRIANGLES);
+				}
+			} else {
+				twgl.setBuffersAndAttributes(gl, textprogramInfo, labelbuffers[iship]);
+				twgl.drawBufferInfo(gl, labelbuffers[iship], gl.TRIANGLES);
+			}
+			gl.disable(gl.BLEND);
+			gl.blendFunc(gl.ONE, gl.ZERO);
+		}
 
 		requestAnimationFrame(render);
 	}
@@ -181,6 +251,8 @@ void main() {
 		} else if (event.code == 'KeyA') {
 			allmode = !allmode;
 			setship();
+		} else if (event.code == 'KeyT') {
+			textenabled = !textenabled;
 		}
 	});
 </script>
