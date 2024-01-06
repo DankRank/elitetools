@@ -1,4 +1,6 @@
 #!/usr/bin/awk -f
+# Copyright (c) 2024 Egor
+# SPDX-License-Identifier: GPL-2.0-or-later
 # ./extractmodel.awk ../disk-elite-beebasm/1-source-files/main-sources/elite-{missile,ships-?}.asm | ./parsemodel | ./dedupmodel.py > shipdata.js
 # ./extractmodel.awk ../6502sp-elite-beebasm/1-source-files/main-sources/elite-source.asm | ./parsemodel | ./dedupmodel.py > shipdata.js
 

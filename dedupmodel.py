@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024 Egor
+# SPDX-License-Identifier: GPL-2.0-or-later
 import ast
 import sys
 data = ast.literal_eval(sys.stdin.read())
