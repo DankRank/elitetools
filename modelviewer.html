@@ -102,26 +102,10 @@ void main() {
 		const vertexes = data.vertexes;
 		const edges = data.edges;
 		const faces = data.faces;
-		function betternormal(i) {
+		function getnormal(i) {
 			if (i >= faces.length && i == 15)
 				return [0, 0, 0];
-			//return faces[i]; // uncomment to see original normals
-			let e1, e2, n;
-			for (const edge of edges) {
-				if (edge[2] == i || edge[3] == i) {
-					if (e1 === undefined) {
-						e1 = edge;
-					} else {
-						e2 = edge;
-						n = v3.cross(v3.subtract(vertexes[e1[0]], vertexes[e1[1]]), v3.subtract(vertexes[e2[0]], vertexes[e2[1]]));
-						if (v3.length(n) != 0)
-							break;
-					}
-				}
-			}
-			if (v3.dot(n, faces[i]) < 0)
-				n = v3.negate(n);
-			return v3.normalize(n);
+			return faces[i];
 		}
 		const arrays = {
 			i_position: [],
@@ -131,8 +115,8 @@ void main() {
 		for (const edge of edges) {
 			const v1 = vertexes[edge[0]];
 			const v2 = vertexes[edge[1]];
-			const n1 = betternormal(edge[2]);
-			const n2 = betternormal(edge[3]);
+			const n1 = getnormal(edge[2]);
+			const n2 = getnormal(edge[3]);
 			arrays.i_position.push(v1[0], v1[1], -v1[2], v2[0], v2[1], -v2[2]);
 			arrays.i_normal1.push(n1[0], n1[1], -n1[2], n1[0], n1[1], -n1[2]);
 			arrays.i_normal2.push(n2[0], n2[1], -n2[2], n2[0], n2[1], -n2[2]);
