@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024 Egor
+# SPDX-License-Identifier: GPL-2.0-or-later
 def showinfo(code):
     k0 = code>>24
     k1 = code>>16 & 0xFF

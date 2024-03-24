@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024 Egor
+# SPDX-License-Identifier: GPL-2.0-or-later
 def seedforsystem(sysno, galno=0, seed=(0x5a4a, 0x0248, 0xb753)):
     w0, w1, w2 = seed
     if galno & 4:
